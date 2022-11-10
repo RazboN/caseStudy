@@ -15,7 +15,7 @@ spring:
       show-sql: true
   datasource:
     platform: postgres
-    url: jdbc:postgresql://db:5432/YKB_HR_DB
+    url: jdbc:postgresql://localhost:5432/YKB_HR_DB
     username: postgres
     password: ykb123
     hibernate:

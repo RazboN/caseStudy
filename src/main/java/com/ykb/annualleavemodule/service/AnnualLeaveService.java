@@ -80,13 +80,11 @@ public class AnnualLeaveService {
     }
 
     public List<EmployeesModel> getEmployees(){
-        List<EmployeesModel> employeeDetails = new ArrayList<>();
+        List<EmployeesModel> employees = _employeeRepo.findAll();
 
-        employeeDetails = _employeeRepo.findAll();
+        log.info("getEmployees - {}", employees);
 
-        log.info("getEmployees - {}", employeeDetails);
-
-        return employeeDetails;
+        return employees;
     }
 
     public  EmployeesModel checkEmployeeExistsAndGetInfo(Long employeeId) throws Exception {
