@@ -1,0 +1,17 @@
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/dto/LeaveRequestsDTO.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/repository/EmployeeRepository.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/dto/LeaveConfirmDTO.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/dto/RequestedLeaveModelDTO.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/helpers/LeaveDuration.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/repository/EmployeeGroupsRepository.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/model/EmployeeDetailsModel.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/GlobalMessages.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/controller/AnnualLeaveController.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/service/AnnualLeaveService.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/repository/RequestedLeaveRepository.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/repository/EmployeeDetailsRepository.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/model/EmployeesModel.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/model/RequestedLeaveModel.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/AnnualLeaveModuleApplication.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/LeaveStatus.java
+/Users/razbon/Desktop/Can Razbonyali/annual-leave-module/src/main/java/com/ykb/annualleavemodule/model/EmployeeGroupsModel.java

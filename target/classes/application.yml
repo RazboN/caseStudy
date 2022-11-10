@@ -1,0 +1,23 @@
+server:
+  port: 9090
+spring:
+  messages:
+    fallback-to-system-locale: false
+  mvc:
+    path-match:
+      matching-strategy: ant-path-matcher
+  sql:
+    init:
+      mode: always
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      show-sql: true
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://db:5432/YKB_HR_DB
+    username: postgres
+    password: ykb123
+    hibernate:
+      ddl-auto: create
+      show-sql: auto
