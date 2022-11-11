@@ -20,13 +20,19 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AnnualLeaveService {
-    @Autowired
     private RequestedLeaveRepository _requestLeaveRepo;
-    @Autowired
     private EmployeeRepository _employeeRepo;
+    private EmployeeDetailsRepository _employeeDetailsRepo;
 
     @Autowired
-    private EmployeeDetailsRepository _employeeDetailsRepo;
+    public AnnualLeaveService(RequestedLeaveRepository requestLeaveRepo,
+                              EmployeeRepository employeeRepo,
+                              EmployeeDetailsRepository employeeDetailsRepo){
+
+        this._requestLeaveRepo = requestLeaveRepo;
+        this._employeeRepo = employeeRepo;
+        this._employeeDetailsRepo = employeeDetailsRepo;
+    }
 
     public List<LeaveRequestsDTO> getActiveRequests(){
         List<LeaveRequestsDTO> activeLeaveRequests = new ArrayList<>();

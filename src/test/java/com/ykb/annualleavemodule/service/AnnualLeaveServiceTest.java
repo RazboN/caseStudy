@@ -1,170 +1,414 @@
 package com.ykb.annualleavemodule.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.ykb.annualleavemodule.LeaveStatus;
-import com.ykb.annualleavemodule.dto.LeaveRequestsDTO;
-import com.ykb.annualleavemodule.helpers.LeaveDuration;
 import com.ykb.annualleavemodule.model.EmployeeDetailsModel;
 import com.ykb.annualleavemodule.model.EmployeeGroupsModel;
 import com.ykb.annualleavemodule.model.EmployeesModel;
 import com.ykb.annualleavemodule.model.RequestedLeaveModel;
+import com.ykb.annualleavemodule.repository.EmployeeDetailsRepository;
 import com.ykb.annualleavemodule.repository.EmployeeRepository;
 import com.ykb.annualleavemodule.repository.RequestedLeaveRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 
-@DataJpaTest
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+/**
+ * TODO: bu teste devam et !!(???)
+ *
+ * */
+
+@ContextConfiguration(classes = {AnnualLeaveService.class})
+@ExtendWith(SpringExtension.class)
 class AnnualLeaveServiceTest {
-
     @Autowired
-    EmployeeRepository _repo;
+    private AnnualLeaveService annualLeaveService;
 
-    @Autowired
-    RequestedLeaveRepository _requestRepo;
+    @MockBean
+    private EmployeeDetailsRepository employeeDetailsRepository;
 
-    @AfterEach
-    void tearDown() {
-        _repo.deleteAll();
-        _requestRepo.deleteAll();
-    }
+    @MockBean
+    private EmployeeRepository employeeRepository;
 
-    @Autowired
-    private LeaveDuration _leaveDuration;
+    @MockBean
+    private RequestedLeaveRepository requestedLeaveRepository;
 
     @BeforeEach
     void setUp() {
-        EmployeesModel emp1 = new EmployeesModel();
-        EmployeeDetailsModel eDet1 = new EmployeeDetailsModel();
-        EmployeeGroupsModel groupEmplyee = new EmployeeGroupsModel();
-
-        EmployeesModel emp2 = new EmployeesModel();
-        EmployeeDetailsModel eDet2 = new EmployeeDetailsModel();
-        EmployeeGroupsModel groupEmplyee2 = new EmployeeGroupsModel();
-
-        EmployeesModel emp3 = new EmployeesModel();
-        EmployeeDetailsModel eDet3 = new EmployeeDetailsModel();
-        EmployeeGroupsModel groupEmplyee3 = new EmployeeGroupsModel();
-
-        emp1.setE_Id(1L);
-        emp1.setName("Cem");
-        emp1.setSurname("Cantekin");
-
-        eDet1.setEd_Id(1L);
-        eDet1.setRemainingLeave(15);
-        eDet1.setStartToWork(LocalDate.parse("2021-01-01"));
-
-        groupEmplyee.setEg_Id(1L);
-        groupEmplyee.setGroupCode("employee");
-        groupEmplyee.setGroupName("employee");
-
-        emp1.setEmployeeType(groupEmplyee);
-        emp1.setEmployeeDetails(eDet1);
-
-        emp2.setE_Id(2L);
-        emp2.setName("Can");
-        emp2.setSurname("Cem");
-
-        eDet2.setEd_Id(124L);
-        eDet2.setRemainingLeave(15);
-        eDet2.setStartToWork(LocalDate.parse("2021-01-01"));
-
-        groupEmplyee2.setEg_Id(1L);
-        groupEmplyee2.setGroupCode("employee");
-        groupEmplyee2.setGroupName("employee");
-
-        emp2.setEmployeeType(groupEmplyee);
-        emp2.setEmployeeDetails(eDet2);
-
-        emp3.setE_Id(3L);
-        emp3.setName("Mert");
-        emp3.setSurname("Cöm");
-
-        eDet3.setEd_Id(125L);
-        eDet3.setRemainingLeave(15);
-        eDet3.setStartToWork(LocalDate.parse("2021-01-01"));
-
-        groupEmplyee3.setEg_Id(2L);
-        groupEmplyee3.setGroupCode("manager");
-        groupEmplyee3.setGroupName("manager");
-
-        emp3.setEmployeeType(groupEmplyee3);
-        emp3.setEmployeeDetails(eDet3);
-
-        RequestedLeaveModel newReq = new RequestedLeaveModel(
-                LocalDate.parse("2022-01-01"),
-                LocalDate.parse("2022-01-07"),
-                LocalDate.parse("2021-01-06"),
-                5,
-                emp1);
-
-        _repo.save(emp1);
-        _repo.save(emp2);
-        _repo.save(emp3);
-        _requestRepo.save(newReq);
 
     }
 
     @Test
-    void shouldSaveLeaveRequestAndChecksLeaveDurationIsRecordSavedAndHasId() throws Exception {
-        EmployeesModel testEmpl =  _repo.findById(1L).get();
-        int leaveDuration = _leaveDuration.leaveDurationCalculator("2021-10-10","2021-10-14");
-        RequestedLeaveModel testRequest = new RequestedLeaveModel(
-                LocalDate.parse("2021-10-15"),
-                LocalDate.parse("2021-10-10"),
-                LocalDate.parse("2021-10-14"),
-                leaveDuration,
-                testEmpl);
-
-        RequestedLeaveModel savedReq = _requestRepo.save(testRequest);
-
-        RequestedLeaveModel req = _requestRepo.findById(savedReq.getReq_id()).get();
-
-        assertAll("isSavedReqNotNull, isSavedReqHasIdGenerated, isIdWasGeneratedForNewReq",
-                () -> assertThat(leaveDuration).isEqualTo(4),
-                () -> assertThat(savedReq).isNotNull().hasFieldOrProperty("req_id"),
-                () -> assertThat(req.getReq_id()).isGreaterThan(0));
-    }
-    @Test
-    void shouldGetsAllActiveStatusLeaveRequests() {
-
-        List<RequestedLeaveModel> modelList = _requestRepo.findAllByStatus(LeaveStatus.WAITING_APPROVAL);
-
-        List<LeaveRequestsDTO> activeLeaveRequests = modelList.stream().map(request -> {
-            LeaveRequestsDTO objDTO =
-                    new LeaveRequestsDTO(
-                            request.getEmployee().getE_Id(),
-                            request.getEmployee().getName(),
-                            request.getEmployee().getSurname(),
-                            request.getLeaveStartDate().toString(),
-                            request.getLeaveEndDate().toString(),
-                            request.getStartWorkingDate().toString()
-                    );
-            return objDTO;
-        }).collect(Collectors.toList());
-
-        assertAll("getsAllActiveRequests",
-                () -> assertThat(modelList).isNotNull(),
-                () -> assertThat(modelList).size().isGreaterThan(0),
-                () -> assertThat(activeLeaveRequests).isNotNull(),
-                () -> assertThat(activeLeaveRequests).size().isGreaterThan(0));
+    void testGetActiveRequests() {
+        when(requestedLeaveRepository.findAllByStatus(LeaveStatus.WAITING_APPROVAL))
+                .thenReturn(new ArrayList<>());
+        assertTrue(annualLeaveService.getActiveRequests().isEmpty());
+        verify(requestedLeaveRepository).findAllByStatus((String) any());
     }
 
     @Test
-    void shouldGetsAllEmployees() {
-        List<EmployeesModel> employees = _repo.findAll();
+    void testGetActiveRequests2() {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
 
-        assertAll("Gets recent employee list",
-                () -> assertThat(employees).isNotNull(),
-                () -> assertThat(employees).size().isGreaterThan(0));
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupName("Group Name");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
+        requestedLeaveModel.setDuration(1);
+        requestedLeaveModel.setEmployee(employeesModel);
+        requestedLeaveModel.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setReq_id(1L);
+        requestedLeaveModel.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setStatus("Status");
+
+        ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
+        requestedLeaveModelList.add(requestedLeaveModel);
+        when(requestedLeaveRepository.findAllByStatus((String) any())).thenReturn(requestedLeaveModelList);
+        assertEquals(1, annualLeaveService.getActiveRequests().size());
+        verify(requestedLeaveRepository).findAllByStatus((String) any());
+    }
+
+    @Test
+    void testGetActiveRequests3() {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupName("Group Name");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
+        requestedLeaveModel.setDuration(1);
+        requestedLeaveModel.setEmployee(employeesModel);
+        requestedLeaveModel.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setReq_id(1L);
+        requestedLeaveModel.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setStatus("Status");
+
+        EmployeeDetailsModel employeeDetailsModel1 = new EmployeeDetailsModel();
+        employeeDetailsModel1.setEd_Id(123L);
+        employeeDetailsModel1.setRemainingLeave(1);
+        employeeDetailsModel1.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel1 = new EmployeeGroupsModel();
+        employeeGroupsModel1.setEg_Id(123L);
+        employeeGroupsModel1.setGroupCode("Group Code");
+        employeeGroupsModel1.setGroupName("Group Name");
+
+        EmployeesModel employeesModel1 = new EmployeesModel();
+        employeesModel1.setE_Id(123L);
+        employeesModel1.setEmployeeDetails(employeeDetailsModel1);
+        employeesModel1.setEmployeeType(employeeGroupsModel1);
+        employeesModel1.setName("Name");
+        employeesModel1.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel1 = new RequestedLeaveModel();
+        requestedLeaveModel1.setDuration(1);
+        requestedLeaveModel1.setEmployee(employeesModel1);
+        requestedLeaveModel1.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setReq_id(1L);
+        requestedLeaveModel1.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setStatus("Status");
+
+        ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
+        requestedLeaveModelList.add(requestedLeaveModel1);
+        requestedLeaveModelList.add(requestedLeaveModel);
+        when(requestedLeaveRepository.findAllByStatus((String) any())).thenReturn(requestedLeaveModelList);
+        assertEquals(2, annualLeaveService.getActiveRequests().size());
+        verify(requestedLeaveRepository).findAllByStatus((String) any());
+    }
+
+    @Test
+    @Disabled()
+    void testGetActiveRequests4() {
+    }
+
+    @Test
+    @Disabled()
+    void testGetActiveRequests5() {
+    }
+
+    @Test
+    @Disabled()
+    void testGetActiveRequests6() {
+    }
+
+    @Test
+    void testGetAllRequests() {
+        when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(new ArrayList<>());
+        assertTrue(annualLeaveService.getAllRequests().isEmpty());
+        verify(requestedLeaveRepository).findAll((Sort) any());
+    }
+
+    @Test
+    void testGetAllRequests2() {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("status");
+        employeeGroupsModel.setGroupName("status");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("status");
+        employeesModel.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
+        requestedLeaveModel.setDuration(1);
+        requestedLeaveModel.setEmployee(employeesModel);
+        requestedLeaveModel.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setReq_id(1L);
+        requestedLeaveModel.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setStatus("status");
+
+        ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
+        requestedLeaveModelList.add(requestedLeaveModel);
+        when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(requestedLeaveModelList);
+        assertEquals(1, annualLeaveService.getAllRequests().size());
+        verify(requestedLeaveRepository).findAll((Sort) any());
+    }
+
+    @Test
+    void testGetAllRequests3() {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("status");
+        employeeGroupsModel.setGroupName("status");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("status");
+        employeesModel.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
+        requestedLeaveModel.setDuration(1);
+        requestedLeaveModel.setEmployee(employeesModel);
+        requestedLeaveModel.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setReq_id(1L);
+        requestedLeaveModel.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setStatus("status");
+
+        EmployeeDetailsModel employeeDetailsModel1 = new EmployeeDetailsModel();
+        employeeDetailsModel1.setEd_Id(123L);
+        employeeDetailsModel1.setRemainingLeave(1);
+        employeeDetailsModel1.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel1 = new EmployeeGroupsModel();
+        employeeGroupsModel1.setEg_Id(123L);
+        employeeGroupsModel1.setGroupCode("status");
+        employeeGroupsModel1.setGroupName("status");
+
+        EmployeesModel employeesModel1 = new EmployeesModel();
+        employeesModel1.setE_Id(123L);
+        employeesModel1.setEmployeeDetails(employeeDetailsModel1);
+        employeesModel1.setEmployeeType(employeeGroupsModel1);
+        employeesModel1.setName("status");
+        employeesModel1.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel1 = new RequestedLeaveModel();
+        requestedLeaveModel1.setDuration(1);
+        requestedLeaveModel1.setEmployee(employeesModel1);
+        requestedLeaveModel1.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setReq_id(1L);
+        requestedLeaveModel1.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel1.setStatus("status");
+
+        ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
+        requestedLeaveModelList.add(requestedLeaveModel1);
+        requestedLeaveModelList.add(requestedLeaveModel);
+        when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(requestedLeaveModelList);
+        assertEquals(2, annualLeaveService.getAllRequests().size());
+        verify(requestedLeaveRepository).findAll((Sort) any());
+    }
+
+    @Test
+    @Disabled()
+    void testGetAllRequests4() {
+    }
+
+    @Test
+    @Disabled()
+    void testGetAllRequests5() {
+    }
+
+    @Test
+    @Disabled()
+    void testGetAllRequests6() {
+    }
+
+    @Test
+    void testSaveLeaveRequest() {
+    }
+
+    @Test
+    void testGetEmployees() {
+        ArrayList<EmployeesModel> employeesModelList = new ArrayList<>();
+        when(employeeRepository.findAll()).thenReturn(employeesModelList);
+        List<EmployeesModel> actualEmployees = annualLeaveService.getEmployees();
+        assertSame(employeesModelList, actualEmployees);
+        assertTrue(actualEmployees.isEmpty());
+        verify(employeeRepository).findAll();
+    }
+
+    @Test
+    void testCheckEmployeeExistsAndGetInfo() throws Exception {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupName("Group Name");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+        Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
+        when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
+        assertSame(employeesModel, annualLeaveService.checkEmployeeExistsAndGetInfo(123L));
+        verify(employeeRepository).findById((Long) any());
+    }
+
+    @Test
+    @Disabled()
+    void testCheckEmployeeExistsAndGetInfo2() throws Exception {
+    }
+
+    @Test
+    void testIsEmployeeManager() throws Exception {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupName("Group Name");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+        Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
+        when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
+        assertFalse(annualLeaveService.isEmployeeManager(123L));
+        verify(employeeRepository).findById((Long) any());
+    }
+
+    @Test
+    @Disabled()
+    void testIsEmployeeManager2() throws Exception {
+    }
+
+    @Test
+    void testReviewLeaveRequest() throws Exception {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupName("Group Name");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+
+        RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
+        requestedLeaveModel.setDuration(1);
+        requestedLeaveModel.setEmployee(employeesModel);
+        requestedLeaveModel.setLeaveEndDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setLeaveStartDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setReq_id(1L);
+        requestedLeaveModel.setStartWorkingDate(LocalDate.ofEpochDay(1L));
+        requestedLeaveModel.setStatus("Status");
+        Optional<RequestedLeaveModel> ofResult = Optional.of(requestedLeaveModel);
+        when(requestedLeaveRepository.findById((Long) any())).thenReturn(ofResult);
+        assertThrows(Exception.class, () -> annualLeaveService.reviewLeaveRequest(123L, 1));
+        verify(requestedLeaveRepository).findById((Long) any());
+    }
+
+    @Test
+    @Disabled()
+    void testReviewLeaveRequest2() throws Exception {
     }
 }
+
