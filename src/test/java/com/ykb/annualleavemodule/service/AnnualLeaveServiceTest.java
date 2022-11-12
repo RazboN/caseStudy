@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 
 import com.ykb.annualleavemodule.LeaveStatus;
@@ -17,6 +16,7 @@ import com.ykb.annualleavemodule.model.EmployeeGroupsModel;
 import com.ykb.annualleavemodule.model.EmployeesModel;
 import com.ykb.annualleavemodule.model.RequestedLeaveModel;
 import com.ykb.annualleavemodule.repository.EmployeeDetailsRepository;
+import com.ykb.annualleavemodule.repository.EmployeeGroupsRepository;
 import com.ykb.annualleavemodule.repository.EmployeeRepository;
 import com.ykb.annualleavemodule.repository.RequestedLeaveRepository;
 
@@ -32,24 +32,19 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.matchers.Null;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * TODO: bu teste devam et !!(???)
+ * TODO: reviewLeaveRequest
  *
  * */
 
 @ContextConfiguration(classes = {AnnualLeaveService.class})
 @ExtendWith(SpringExtension.class)
 class AnnualLeaveServiceTest {
-    @Autowired
-    private AnnualLeaveService annualLeaveService;
-
     @MockBean
     private EmployeeDetailsRepository employeeDetailsRepository;
 
@@ -60,11 +55,14 @@ class AnnualLeaveServiceTest {
     private RequestedLeaveRepository requestedLeaveRepository;
 
     @MockBean
+    private EmployeeGroupsRepository employeeGroupsRepository;
+
+    @MockBean
     private AnnualLeaveService underTest;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         underTest = new AnnualLeaveService(requestedLeaveRepository,
                 employeeRepository, employeeDetailsRepository);
     }
@@ -73,8 +71,7 @@ class AnnualLeaveServiceTest {
     void testGetActiveRequestsWithoutAnyRecords() {
         when(requestedLeaveRepository.findAllByStatus(LeaveStatus.WAITING_APPROVAL))
                 .thenReturn(new ArrayList<>());
-        assertTrue(annualLeaveService.getActiveRequests().isEmpty());
-        verify(requestedLeaveRepository).findAllByStatus((String) any());
+        assertTrue(underTest.getActiveRequests().isEmpty());
     }
 
     @Test
@@ -107,9 +104,9 @@ class AnnualLeaveServiceTest {
 
         ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
         requestedLeaveModelList.add(requestedLeaveModel);
-        when(requestedLeaveRepository.findAllByStatus((String) any())).thenReturn(requestedLeaveModelList);
-        assertEquals(1, annualLeaveService.getActiveRequests().size());
-        verify(requestedLeaveRepository).findAllByStatus((String) any());
+        when(requestedLeaveRepository.findAllByStatus(LeaveStatus.WAITING_APPROVAL))
+                .thenReturn(requestedLeaveModelList);
+        assertEquals(1, underTest.getActiveRequests().size());
     }
 
     @Test
@@ -170,30 +167,12 @@ class AnnualLeaveServiceTest {
         requestedLeaveModelList.add(requestedLeaveModel1);
         requestedLeaveModelList.add(requestedLeaveModel);
         when(requestedLeaveRepository.findAllByStatus((String) any())).thenReturn(requestedLeaveModelList);
-        assertEquals(2, annualLeaveService.getActiveRequests().size());
-        verify(requestedLeaveRepository).findAllByStatus((String) any());
+        assertEquals(2, underTest.getActiveRequests().size());
     }
-
-    @Test
-    @Disabled()
-    void testGetActiveRequests4() {
-    }
-
-    @Test
-    @Disabled()
-    void testGetActiveRequests5() {
-    }
-
-    @Test
-    @Disabled()
-    void testGetActiveRequests6() {
-    }
-
     @Test
     void testGetAllRequestWithoutAnyRecord() {
         when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(new ArrayList<>());
-        assertTrue(annualLeaveService.getAllRequests().isEmpty());
-        verify(requestedLeaveRepository).findAll((Sort) any());
+        assertTrue(underTest.getAllRequests().isEmpty());
     }
 
     @Test
@@ -227,8 +206,7 @@ class AnnualLeaveServiceTest {
         ArrayList<RequestedLeaveModel> requestedLeaveModelList = new ArrayList<>();
         requestedLeaveModelList.add(requestedLeaveModel);
         when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(requestedLeaveModelList);
-        assertEquals(1, annualLeaveService.getAllRequests().size());
-        verify(requestedLeaveRepository).findAll((Sort) any());
+        assertEquals(1, underTest.getAllRequests().size());
     }
 
     @Test
@@ -247,7 +225,7 @@ class AnnualLeaveServiceTest {
         employeesModel.setE_Id(123L);
         employeesModel.setEmployeeDetails(employeeDetailsModel);
         employeesModel.setEmployeeType(employeeGroupsModel);
-        employeesModel.setName("status");
+        employeesModel.setName("John");
         employeesModel.setSurname("Doe");
 
         RequestedLeaveModel requestedLeaveModel = new RequestedLeaveModel();
@@ -289,27 +267,25 @@ class AnnualLeaveServiceTest {
         requestedLeaveModelList.add(requestedLeaveModel1);
         requestedLeaveModelList.add(requestedLeaveModel);
         when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(requestedLeaveModelList);
-        assertEquals(2, annualLeaveService.getAllRequests().size());
-        verify(requestedLeaveRepository).findAll((Sort) any());
+        assertEquals(2, underTest.getAllRequests().size());
     }
 
     @Test
-    @Disabled()
-    void testGetAllRequests4() {
-    }
-
-    @Test
-    @Disabled()
-    void testGetAllRequests5() {
-    }
-
-    @Test
-    @Disabled()
-    void testGetAllRequests6() {
-    }
-
-    @Test
+    @Disabled
     void testSaveLeaveRequest() {
+        /**
+         *  startWorkingDate = backToWork;
+         *  leaveStartDate = startDate;*
+         *  leaveEndDate = endDate;
+         *  this.duration = duration;
+         *  employee = requestOwner;
+         */
+
+        RequestedLeaveModel testRequest = new RequestedLeaveModel();
+        given(underTest.saveLeaveRequest(testRequest)).willReturn(testRequest);
+        assertThat(testRequest).isNotNull();
+        assertThat(testRequest).hasFieldOrProperty("req_id");
+
     }
 
     @Test
@@ -320,7 +296,7 @@ class AnnualLeaveServiceTest {
         tempEmployee.setEmployeeType(null);
         tempEmployee.setName("Test");
         tempEmployee.setSurname("Test");
-        employeeRepository.save(tempEmployee);
+        //employeeRepository.save(tempEmployee);
 
         List<EmployeesModel> ofResult = List.of(tempEmployee);
         given(underTest.getEmployees()).willReturn(ofResult);
@@ -345,10 +321,9 @@ class AnnualLeaveServiceTest {
         employeesModel.setEmployeeType(employeeGroupsModel);
         employeesModel.setName("Name");
         employeesModel.setSurname("Doe");
-        Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
-        when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
-        assertSame(employeesModel, annualLeaveService.checkEmployeeExistsAndGetInfo(123L));
-        verify(employeeRepository).findById((Long) any());
+
+        given(employeeRepository.findById((123L))).willReturn(Optional.of(employeesModel));
+        assertSame(employeesModel, underTest.checkEmployeeExistsAndGetInfo(123L));
     }
 
     @Test
@@ -371,16 +346,17 @@ class AnnualLeaveServiceTest {
         employeeGroupsModel.setGroupCode("employee");
         employeeGroupsModel.setGroupName("employee");
 
-        EmployeesModel employeesModel = new EmployeesModel();
-        employeesModel.setE_Id(123L);
-        employeesModel.setEmployeeDetails(employeeDetailsModel);
-        employeesModel.setEmployeeType(employeeGroupsModel);
-        employeesModel.setName("Name");
-        employeesModel.setSurname("Doe");
-        Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
+        EmployeesModel testEmployee = new EmployeesModel();
+        testEmployee.setE_Id(1L);
+        testEmployee.setEmployeeDetails(employeeDetailsModel);
+        testEmployee.setEmployeeType(employeeGroupsModel);
+        testEmployee.setName("Name");
+        testEmployee.setSurname("Doe");
+
+        Optional<EmployeesModel> ofResult = Optional.of(testEmployee);
         when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
-        assertFalse(annualLeaveService.isEmployeeManager(123L));
-        verify(employeeRepository).findById((Long) any());
+        EmployeeGroupsModel empGr = underTest.checkEmployeeExistsAndGetInfo(123L).getEmployeeType();
+        assertFalse(empGr.getGroupName().equals("manager"));
     }
 
     @Test
@@ -401,10 +377,10 @@ class AnnualLeaveServiceTest {
         employeesModel.setEmployeeType(employeeGroupsModel);
         employeesModel.setName("Name");
         employeesModel.setSurname("Doe");
+
         Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
         when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
-        assertTrue(annualLeaveService.isEmployeeManager(123L));
-        verify(employeeRepository).findById((Long) any());
+        assertTrue(underTest.isEmployeeManager(123L));
     }
 
     @Test
@@ -436,13 +412,7 @@ class AnnualLeaveServiceTest {
         requestedLeaveModel.setStatus("Status");
         Optional<RequestedLeaveModel> ofResult = Optional.of(requestedLeaveModel);
         when(requestedLeaveRepository.findById((Long) any())).thenReturn(ofResult);
-        assertThrows(Exception.class, () -> annualLeaveService.reviewLeaveRequest(123L, 1));
-        verify(requestedLeaveRepository).findById((Long) any());
-    }
-
-    @Test
-    @Disabled()
-    void testReviewLeaveRequest2() throws Exception {
+        assertThrows(Exception.class, () -> underTest.reviewLeaveRequest(123L, 1));
     }
 }
 

@@ -80,11 +80,9 @@ public class AnnualLeaveService {
     }
 
     public RequestedLeaveModel saveLeaveRequest(RequestedLeaveModel newRequest){
-        _requestLeaveRepo.save(newRequest);
-
+        RequestedLeaveModel savedReq = _requestLeaveRepo.save(newRequest);
         log.info("Leave request saved - {}", newRequest);
-
-        return newRequest;
+        return savedReq;
     }
 
     public List<EmployeesModel> getEmployees(){
@@ -106,7 +104,6 @@ public class AnnualLeaveService {
 
     public boolean isEmployeeManager(Long employeeId) throws Exception {
         EmployeesModel requesterEmployee = checkEmployeeExistsAndGetInfo(employeeId);
-
         return requesterEmployee.getEmployeeType().getGroupCode().equals("manager");
     }
 
