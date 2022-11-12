@@ -1,16 +1,15 @@
 package com.ykb.annualleavemodule.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.*;
 
 import com.ykb.annualleavemodule.LeaveStatus;
 import com.ykb.annualleavemodule.model.EmployeeDetailsModel;
@@ -24,6 +23,7 @@ import com.ykb.annualleavemodule.repository.RequestedLeaveRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Disabled;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockitoAnnotations;
+import org.mockito.internal.matchers.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Sort;
@@ -57,13 +59,18 @@ class AnnualLeaveServiceTest {
     @MockBean
     private RequestedLeaveRepository requestedLeaveRepository;
 
+    @MockBean
+    private AnnualLeaveService underTest;
+
     @BeforeEach
     void setUp() {
-
+        MockitoAnnotations.initMocks(this);
+        underTest = new AnnualLeaveService(requestedLeaveRepository,
+                employeeRepository, employeeDetailsRepository);
     }
 
     @Test
-    void testGetActiveRequests() {
+    void testGetActiveRequestsWithoutAnyRecords() {
         when(requestedLeaveRepository.findAllByStatus(LeaveStatus.WAITING_APPROVAL))
                 .thenReturn(new ArrayList<>());
         assertTrue(annualLeaveService.getActiveRequests().isEmpty());
@@ -71,7 +78,7 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    void testGetActiveRequests2() {
+    void testGetActiveRequestsWithRecord() {
         EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
         employeeDetailsModel.setEd_Id(123L);
         employeeDetailsModel.setRemainingLeave(1);
@@ -106,7 +113,7 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    void testGetActiveRequests3() {
+    void testGetActiveRequestsWithRecords() {
         EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
         employeeDetailsModel.setEd_Id(123L);
         employeeDetailsModel.setRemainingLeave(1);
@@ -183,14 +190,14 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    void testGetAllRequests() {
+    void testGetAllRequestWithoutAnyRecord() {
         when(requestedLeaveRepository.findAll((Sort) any())).thenReturn(new ArrayList<>());
         assertTrue(annualLeaveService.getAllRequests().isEmpty());
         verify(requestedLeaveRepository).findAll((Sort) any());
     }
 
     @Test
-    void testGetAllRequests2() {
+    void testGetAllRequestsWithRecord() {
         EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
         employeeDetailsModel.setEd_Id(123L);
         employeeDetailsModel.setRemainingLeave(1);
@@ -225,7 +232,7 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    void testGetAllRequests3() {
+    void testGetAllRequestsWithRecords() {
         EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
         employeeDetailsModel.setEd_Id(123L);
         employeeDetailsModel.setRemainingLeave(1);
@@ -307,12 +314,17 @@ class AnnualLeaveServiceTest {
 
     @Test
     void testGetEmployees() {
-        ArrayList<EmployeesModel> employeesModelList = new ArrayList<>();
-        when(employeeRepository.findAll()).thenReturn(employeesModelList);
-        List<EmployeesModel> actualEmployees = annualLeaveService.getEmployees();
-        assertSame(employeesModelList, actualEmployees);
-        assertTrue(actualEmployees.isEmpty());
-        verify(employeeRepository).findAll();
+        EmployeesModel tempEmployee = new EmployeesModel();
+        tempEmployee.setE_Id(123L);
+        tempEmployee.setEmployeeDetails(null);
+        tempEmployee.setEmployeeType(null);
+        tempEmployee.setName("Test");
+        tempEmployee.setSurname("Test");
+        employeeRepository.save(tempEmployee);
+
+        List<EmployeesModel> ofResult = List.of(tempEmployee);
+        given(underTest.getEmployees()).willReturn(ofResult);
+        assertThat(ofResult.size()).isEqualTo(1);
     }
 
     @Test
@@ -324,8 +336,8 @@ class AnnualLeaveServiceTest {
 
         EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
         employeeGroupsModel.setEg_Id(123L);
-        employeeGroupsModel.setGroupCode("Group Code");
-        employeeGroupsModel.setGroupName("Group Name");
+        employeeGroupsModel.setGroupCode("employee");
+        employeeGroupsModel.setGroupName("employee");
 
         EmployeesModel employeesModel = new EmployeesModel();
         employeesModel.setE_Id(123L);
@@ -340,12 +352,15 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    @Disabled()
-    void testCheckEmployeeExistsAndGetInfo2() throws Exception {
+    void testCheckEmployeeExistsAndGetInfoThrowsException() throws Exception {
+        given(employeeRepository.findById((Long) any())).willReturn(null);
+        assertThatThrownBy(() -> underTest.checkEmployeeExistsAndGetInfo((Long) any()))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessageContaining("msg.employeeNotFound");
     }
 
     @Test
-    void testIsEmployeeManager() throws Exception {
+    void testIsEmployeeManagerFalse() throws Exception {
         EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
         employeeDetailsModel.setEd_Id(123L);
         employeeDetailsModel.setRemainingLeave(1);
@@ -353,8 +368,8 @@ class AnnualLeaveServiceTest {
 
         EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
         employeeGroupsModel.setEg_Id(123L);
-        employeeGroupsModel.setGroupCode("Group Code");
-        employeeGroupsModel.setGroupName("Group Name");
+        employeeGroupsModel.setGroupCode("employee");
+        employeeGroupsModel.setGroupName("employee");
 
         EmployeesModel employeesModel = new EmployeesModel();
         employeesModel.setE_Id(123L);
@@ -369,8 +384,27 @@ class AnnualLeaveServiceTest {
     }
 
     @Test
-    @Disabled()
-    void testIsEmployeeManager2() throws Exception {
+    void testIsEmployeeManagerTrue() throws Exception {
+        EmployeeDetailsModel employeeDetailsModel = new EmployeeDetailsModel();
+        employeeDetailsModel.setEd_Id(123L);
+        employeeDetailsModel.setRemainingLeave(1);
+        employeeDetailsModel.setStartToWork(LocalDate.ofEpochDay(1L));
+
+        EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
+        employeeGroupsModel.setEg_Id(123L);
+        employeeGroupsModel.setGroupCode("manager");
+        employeeGroupsModel.setGroupName("manager");
+
+        EmployeesModel employeesModel = new EmployeesModel();
+        employeesModel.setE_Id(123L);
+        employeesModel.setEmployeeDetails(employeeDetailsModel);
+        employeesModel.setEmployeeType(employeeGroupsModel);
+        employeesModel.setName("Name");
+        employeesModel.setSurname("Doe");
+        Optional<EmployeesModel> ofResult = Optional.of(employeesModel);
+        when(employeeRepository.findById((Long) any())).thenReturn(ofResult);
+        assertTrue(annualLeaveService.isEmployeeManager(123L));
+        verify(employeeRepository).findById((Long) any());
     }
 
     @Test
@@ -382,7 +416,7 @@ class AnnualLeaveServiceTest {
 
         EmployeeGroupsModel employeeGroupsModel = new EmployeeGroupsModel();
         employeeGroupsModel.setEg_Id(123L);
-        employeeGroupsModel.setGroupCode("Group Code");
+        employeeGroupsModel.setGroupCode("manager");
         employeeGroupsModel.setGroupName("Group Name");
 
         EmployeesModel employeesModel = new EmployeesModel();

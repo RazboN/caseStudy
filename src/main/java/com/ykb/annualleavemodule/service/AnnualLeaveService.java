@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -87,23 +89,19 @@ public class AnnualLeaveService {
 
     public List<EmployeesModel> getEmployees(){
         List<EmployeesModel> employees = _employeeRepo.findAll();
-
         log.info("getEmployees - {}", employees);
-
         return employees;
     }
 
     public  EmployeesModel checkEmployeeExistsAndGetInfo(Long employeeId) throws Exception {
-        EmployeesModel employee = _employeeRepo.findById(employeeId).get();
-
+        Optional<EmployeesModel> employee = _employeeRepo.findById(employeeId);
         if(null == employee){
             log.info("ID {}  çalışan bulunamadı!", employeeId);
-
-            throw new Exception("msg.employeeNotFound");
+            throw new NoSuchElementException("msg.employeeNotFound");
         }
 
-        log.info("checkEmployeeExistsAndGetInfo - {}", employee);
-        return employee;
+        log.info("checkEmployeeExistsAndGetInfo - {}", employee.get());
+        return employee.get();
     }
 
     public boolean isEmployeeManager(Long employeeId) throws Exception {
